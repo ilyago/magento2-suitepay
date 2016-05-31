@@ -1,0 +1,20 @@
+{
+    "name": "suitepay/platform",
+    "description": "Suitepay integration for Magento 2",
+    "type": "magento2-module",
+    "version": "dev-master",
+    "license": [
+        "OSL-3.0"
+    ],
+    "require": {
+        
+    },
+    "extra": {
+        "map": [
+            [
+                "*",
+                "Suitepay/Platform"
+            ]
+        ]
+    }
+}
