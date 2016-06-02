@@ -89,7 +89,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         //echo "$json_data<br>";
         $sandbox = ($this->_sandbox) ? 'qa':'gateway';
         $curlURL = "https://{$sandbox}.suitepay.com/api/v2/card/{$type}/";    // qa.suitepay.com/parmeters for testing and api.suitepay.com/parameters for the live
-
+        $this->debugData(['request' => $curlURL]);
+        
         $ch = curl_init($curlURL);
          
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
@@ -161,8 +162,6 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                         'ipaddress' => $_SERVER['REMOTE_ADDR']
                 )
         );
-
-        $this->_logger->addInfo( json_encode($apidata) );
 
         try {            
             $charge = $this->callApi($apidata,'sale'); 
