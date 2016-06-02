@@ -42,6 +42,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         \Magento\Framework\Module\ModuleListInterface $moduleList,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
         \Magento\Directory\Model\CountryFactory $countryFactory,
+        array $some = array(),
         array $data = array()
     ) {
         parent::__construct(
@@ -54,6 +55,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $logger,
             $moduleList,
             $localeDate,
+            null,
             null,
             $data
         );
