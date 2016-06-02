@@ -27,6 +27,12 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
     protected $_minAmount = null;
     protected $_maxAmount = null;
+
+    protected $_api_key = null;
+    protected $_api_login = null;
+    protected $_developerid = null;
+    protected $_mid = null;
+
     protected $_supportedCurrencyCodes = array('USD');
 
     protected $_debugReplacePrivateDataKeys = ['number', 'exp_month', 'exp_year', 'cvc'];
@@ -63,78 +69,47 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->_countryFactory = $countryFactory;
         $this->_minAmount = $this->getConfigData('min_order_total');
         $this->_maxAmount = $this->getConfigData('max_order_total');
+        $this->_api_key = $this->getConfigData('api_key');
+        $this->_api_login = $this->getConfigData('api_login');
+        $this->_developerid = $this->getConfigData('developerid');
+        $this->_mid = $this->getConfigData('mid');
     }
-
-
 
 
 
     //right now this function has sample code only, you need put code here as per your api.
-    private function callApi(Varien_Object $payment, $amount, $type){
- 
-        //call your authorize api here, incase of error throw exception.
-        //only example code written below to show flow of code
+    private function callApi($apidata, $type){
 
-        /*
-        $order = $payment->getOrder();
-        $billingaddress = $order->getBillingAddress();
-        $totals = number_format($amount, 2, '.', '');
-        $orderId = $order->getIncrementId();
-        $currencyDesc = $order->getBaseCurrencyCode();
-        $url = $this->getConfigData('gateway_url');
-        $fields = array(
-                'api_username'=> $this->getConfigData('api_username'),
-                'api_password'=> $this->getConfigData('api_password'),
-                'customer_firstname'=> $billingaddress->getData('firstname'),
-                'customer_lastname'=> $billingaddress->getData('lastname'),
-                'customer_phone'=> $billingaddress->getData('telephone'),
-                'customer_email'=> $billingaddress->getData('email'),
-                'customer_ipaddress'=> $_SERVER['REMOTE_ADDR'],
-                'bill_firstname'=> $billingaddress->getData('firstname'),
-                'bill_lastname'=> $billingaddress->getData('lastname'),
-                'Bill_address1'=> $billingaddress->getData('street'),
-                'bill_city'=> $billingaddress->getData('city'),
-                'bill_country'=> $billingaddress->getData('country_id'),
-                'bill_state'=> $billingaddress->getData('region'),
-                'bill_zip'=> $billingaddress->getData('postcode'),
-                'customer_cc_expmo'=> $payment->getCcExpMonth(),
-                'customer_cc_expyr'=> $payment->getCcExpYear(),
-                'customer_cc_number'=> $payment->getCcNumber(),
 
-                'customer_cc_cvc'=> $payment->getCcCid(),
-                'merchant_ref_number'=> $order->getIncrementId(),
-                'currencydesc'=>$currencyDesc,
-                'amount'=>$totals
-        );
- 
-        $fields_string="";
-        foreach($fields as $key=>$value) {
-        $fields_string .= $key.'='.$value.'&';
-        }
-        $fields_string = substr($fields_string,0,-1);
-        //open connection
-        $ch = curl_init($url);
-        //set the url, number of POST vars, POST data
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POST,1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS,$fields_string);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION ,1);
-        curl_setopt($ch, CURLOPT_HEADER ,0); // DO NOT RETURN HTTP HEADERS
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER ,1); // RETURN THE CONTENTS OF THE CALL
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120); // Timeout on connect (2 minutes)
-        //execute post
-        $result = curl_exec($ch);
+
+        $json_data = json_encode($apidata);
+
+        //echo "$json_data<br>";
+        $curlURL = "https://qa.suitepay.com/api/v2/card/{$type}/";    // qa.suitepay.com/parmeters for testing and api.suitepay.com/parameters for the live
+
+        $ch = curl_init($curlURL);
+         
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        //curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        //curl_setopt($ch, CURLOPT_SSL_CIPHER_LIST, 'TLSv1.2');
+        //curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+         
+        curl_setopt($ch, CURLOPT_SSLVERSION, 6);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+
+        //curl_setopt($ch, CURLOPT_SSL_CIPHER_LIST, 'TLSv1');
+         
+        $response = curl_exec($ch);
+        $arresult = json_decode($response,true);
+
         curl_close($ch);
-        */
  
-        return array('status'=>1,'transaction_id' => time() , 'fraud' => rand(0,1));
+        return $arresult;
     }
-
-
-
-
-
 
 
 
@@ -148,7 +123,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      */
     public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
-        //throw new \Magento\Framework\Validator\Exception(__('Inside Platform, throwing donuts :]'));
+        //throw new \Magento\Framework\Validator\Exception(__('Inside Platform, throwing coins :]'));
 
         /** @var \Magento\Sales\Model\Order $order */
         $order = $payment->getOrder();
@@ -156,60 +131,58 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         /** @var \Magento\Sales\Model\Order\Address $billing */
         $billing = $order->getBillingAddress();
 
-        try {
-            $requestData = [
-                'amount'        => $amount * 100,
-                'currency'      => strtolower($order->getBaseCurrencyCode()),
-                'description'   => sprintf('#%s, %s', $order->getIncrementId(), $order->getCustomerEmail()),
-                'card'          => [
-                    'number'            => $payment->getCcNumber(),
-                    'exp_month'         => sprintf('%02d',$payment->getCcExpMonth()),
-                    'exp_year'          => $payment->getCcExpYear(),
-                    'cvc'               => $payment->getCcCid(),
-                    'name'              => $billing->getName(),
-                    'address_line1'     => $billing->getStreetLine(1),
-                    'address_line2'     => $billing->getStreetLine(2),
-                    'address_city'      => $billing->getCity(),
-                    'address_zip'       => $billing->getPostcode(),
-                    'address_state'     => $billing->getRegion(),
-                    'address_country'   => $billing->getCountryId(),
-                    // To get full localized country name, use this instead:
-                    // 'address_country'   => $this->_countryFactory->create()->loadByCode($billing->getCountryId())->getName(),
-                ]
-            ];
+        $apidata = array (
+        'user_login' => $this->_api_login,
+        'public_key' => $this->_api_key,
+        'developerid' => $this->_developerid,
+        'transaction_data' => array (
+                        'mid' => $this->_mid,
+                        'orderid' => $order->getIncrementId(),    /// must be a unique number each time a sale is done
+                        'amount' => $amount,     
 
-            $charge = $this->callApi($payment,$amount,'authorize'); //$requestData
+                        'cardfullname' => $billing->getName(),
+                        'creditcard' => $payment->getCcNumber(),
+                        'cvv' => $payment->getCcCid(),
+                        'month' => sprintf('%02d',$payment->getCcExpMonth()),
+                        'year' => $payment->getCcExpYear(),
 
+                        'baddress' => $billing->getStreetLine(1),
+                        'baddress2' => $billing->getStreetLine(2),
+                        'bcity' => $billing->getCity(),
+                        'bstate' => $billing->getRegion(),
+                        'bzip' => $billing->getPostcode(),
+                        'bcountry' => $billing->getCountryId(),
 
-            if($charge === false) {
+                        'cemail' => $order->getCustomerEmail(),
+                        'cphone' => $billing->getTelephone(),
+                        'ipaddress' => $_SERVER['REMOTE_ADDR']
+                )
+        );
+
+        $this->_logger->addInfo( json_encode($apidata) );
+
+        try {            
+            $charge = $this->callApi($apidata,'sale'); 
+            //$charge = json_decode('{"status":"approved","message":"Card Sale processed successfully.","transaction_id":"bTUXpn1YgjMT5Cb","customervault_id":null,"code":"[0000]The transaction has been accepted."}',true);
+
+            if($charge["status"] == "approved") {
+                
+                $payment->setTransactionId($charge['transaction_id']);
+                $payment->setIsTransactionClosed(1);
 
             } else {
-     
-                if($charge['status'] == 1){
-                    $payment->setTransactionId($charge['transaction_id']);
-                    $payment->setIsTransactionClosed(1);
-                }else{
-
-                }
-     
                 // Add the comment and save the order
+                $this->_logger->error(__($charge['code']));
+                throw new \Magento\Framework\Validator\Exception(__( $charge['message'] ));
             }
-
         } catch (\Exception $e) {
-            $this->debugData(['request' => $requestData, 'exception' => $e->getMessage()]);
+            $this->debugData(['request' => $apidata, 'exception' => $e->getMessage()]);
             $this->_logger->error(__('Payment capturing error.'));
             throw new \Magento\Framework\Validator\Exception(__('Payment capturing error.'));
         }
 
-
         return $this;
     }
-
-
-
-
-
-
 
 
 
