@@ -32,6 +32,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $_api_login = null;
     protected $_developerid = null;
     protected $_mid = null;
+    protected $_sandbox = null;
 
     protected $_supportedCurrencyCodes = array('USD');
 
@@ -73,6 +74,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->_api_login = $this->getConfigData('api_login');
         $this->_developerid = $this->getConfigData('developerid');
         $this->_mid = $this->getConfigData('mid');
+        $this->_sandbox = $this->getConfigData('sandbox');
     }
 
 
@@ -85,7 +87,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $json_data = json_encode($apidata);
 
         //echo "$json_data<br>";
-        $curlURL = "https://qa.suitepay.com/api/v2/card/{$type}/";    // qa.suitepay.com/parmeters for testing and api.suitepay.com/parameters for the live
+        $sandbox = ($this->_sandbox) ? 'qa':'gateway';
+        $curlURL = "https://{$sandbox}.suitepay.com/api/v2/card/{$type}/";    // qa.suitepay.com/parmeters for testing and api.suitepay.com/parameters for the live
 
         $ch = curl_init($curlURL);
          
