@@ -1,7 +1,14 @@
 {
     "name": "suitepay/platform",
-    "description": "Suitepay integration for Magento 2",
+    "description": "Suitepay integration for Magento2",
     "type": "magento2-module",
+    "authors": [
+        {
+            "name": "Ilya Gokadze",
+            "email": "ilyago@gmail.com",
+            "role": "Developer"
+        }
+    ],
     "version": "dev-master",
     "license": [
         "OSL-3.0"

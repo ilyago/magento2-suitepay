@@ -5,7 +5,7 @@ Suitepay payment gateway Magento2 extension
 
 You can read the full documentation [here](https://support.suitepay.com/).
 
-Other notes on extension: https://github.com/ilyago/magento2-Suitepay_Platform/wiki/Notes/
+Other notes on extension: https://github.com/ilyago/magento2-suitepay/wiki
 
 Install
 =======
@@ -26,6 +26,6 @@ Install
     php bin/magento module:enable Suitepay_Platform --clear-static-content
     php bin/magento setup:upgrade
     ```
-4. Enable and configure Platform in Magento Admin under Stores/Configuration/Payment Methods/Platform
+4. Enable and configure Suitepay in Magento Admin under Stores/Configuration/Sales/Payment Methods/Suitepay
 
 

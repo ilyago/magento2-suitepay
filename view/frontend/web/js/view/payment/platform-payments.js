@@ -5,7 +5,6 @@
  * @package     Suitepay_Platform
  * @author      Ilya Gokadze
  * @copyright   Suitepay (http://suitepay.com)
- * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 /*browser:true*/
 /*global define*/
