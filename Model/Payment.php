@@ -86,7 +86,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $json_data = json_encode($apidata);
 
         //echo "$json_data<br>";
-        $sandbox = ($this->_sandbox) ? 'qa':'gateway';
+        $sandbox = ($this->_sandbox) ? 'qa':'api';
         $curlURL = "https://{$sandbox}.suitepay.com/api/v2/card/{$type}/";    // qa.suitepay.com/parmeters for testing and api.suitepay.com/parameters for the live
         $this->debugData(['request' => $curlURL]);
         
@@ -108,6 +108,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
          
         $response = curl_exec($ch);
         $arresult = json_decode($response,true);
+
+        $this->debugData(['response' => $arresult]);
 
         curl_close($ch);
  
